@@ -80,6 +80,16 @@ int main(int argc, char* argv[]){
     //provvisional address
     int port = 5000;
     char *ad = "127.0.0.1";
+    char name[32];
+
+    //login  part1
+    printf("Enter your username: \n");
+    if(!fgets(name,32,stdin)){
+        fprintf(stderr, "User name field can not be empty");
+        exit(EXIT_FAILURE);
+    }
+
+    //TODO password
 
     //variables for handling a socket
     
@@ -103,6 +113,11 @@ int main(int argc, char* argv[]){
     } 
 
     fprintf(stderr, "Connesione Creata\n");
+
+    ret = send(socket_desc, name, 32, 0);
+    if(ret == -1){
+        handle_error("send name");
+    }
 
     //TO DO  send & recive
     

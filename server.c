@@ -9,16 +9,53 @@
 #include <pthread.h>
 
 #define DEBUG 1
+#define MAX_USER 20
+
+int logged_users = 0;
+int uid = 0;
 
 //TODO Inserire struc user
 typedef struct{
+    char name[32];
+    int uid;
     int sokcet_desc;
     struct sockaddr_in* client_addr;
 }user_t;
 
+user_t *user_list[MAX_USER];
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 void handle_error(char* msg){
     perror(msg);
     exit(EXIT_FAILURE);
+}
+
+void add_queque(user_t *user){
+    pthread_mutex_lock(&mutex);
+    int i;
+    for(i = 0; i<MAX_USER; i++){
+        if(!user_list[i]){
+            user_list[i] = user;
+            break;
+        }
+    }
+    
+    pthread_mutex_unlock(&mutex);
+}
+
+void remove_queque(int uid){
+    pthread_mutex_lock(&mutex);
+    int i;
+    for(i = 0; i<MAX_USER; i++){
+        if(user_list[i]->uid == uid){
+            user_list[i] = NULL;
+            break;
+        }
+
+    }
+    pthread_mutex_unlock(&mutex);
+
 }
 
 void send_message(char* msg, int sokcet_desc){
@@ -45,7 +82,26 @@ void *connection_handler(void *arg){
     char buf[2048];
     size_t bud_len = sizeof(buf);
 
+    char name[32];
+    logged_users++;
+
     user_t *user = (user_t*)arg;
+
+    ret = recv(user->sokcet_desc, name, 32 ,0);
+    if(ret == -1){
+        handle_error("Can not recive user name");
+    }
+    if(ret){
+        if(strlen(name) == 0){
+            fprintf(stderr, "Name field can not be empty");
+            exit(EXIT_FAILURE);
+        }
+        else{
+            strcpy(user->name, name);
+        }
+    }
+
+    if(DEBUG) printf("Name: %s\n", name);
 
     while(1){
         //read message from client
@@ -68,9 +124,18 @@ void *connection_handler(void *arg){
         
         send_message(buf, user->sokcet_desc);
         
-
-        
     }
+
+    //cclose ocket and remove user
+    ret = close(user->sokcet_desc);
+    if(ret == -1){
+        handle_error("Can not close socket");
+    }
+    remove_queque(user->uid);
+    free(user);
+    logged_users--;
+
+    pthread_detach(pthread_self());
 }
 
 int main(int argc, char* argv[]){
@@ -79,6 +144,8 @@ int main(int argc, char* argv[]){
     int port = 5000;
 
     pthread_t thread; 
+
+    printf("---Starting the server---\n");
 
     struct sockaddr_in server_addr = {0};
     struct sockaddr_in client_addr = {0};
@@ -113,6 +180,8 @@ int main(int argc, char* argv[]){
         handle_error("Can not listen");
     }
 
+    printf("--SERVER UP--\n");
+
     while(1){
 
         struct sockaddr_in* client_addr =  calloc(1, sizeof(struct sockaddr_in));
@@ -123,10 +192,14 @@ int main(int argc, char* argv[]){
             handle_error("Can not open socket to accept connection");
         }
 
+        uid++;
+
         //thrad arg
         user_t *user_args = malloc(sizeof(user_t));
+        user_args->uid = uid;
         user_args->sokcet_desc = client_desc;
         user_args->client_addr = client_addr;
+        add_queque(user_args);
         ret = pthread_create(&thread, NULL, connection_handler, (void*)user_args);
         if(ret){
             handle_error("Can not create a new thread");
