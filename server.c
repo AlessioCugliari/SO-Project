@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define MAX_USER 20
 
 int logged_users = 0;
@@ -29,6 +29,18 @@ pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 void handle_error(char* msg){
     perror(msg);
     exit(EXIT_FAILURE);
+}
+
+void newline_remove(char *msg_in){
+    int msg_in_len = strlen(msg_in);
+   
+    int i;
+    for(i = 0; i < msg_in_len; i++){
+        if(msg_in[i] == '\n'){
+            msg_in[i] =  '\0';
+            break;
+        }
+    }
 }
 
 void add_queque(user_t *user){
@@ -58,17 +70,32 @@ void remove_queque(int uid){
 
 }
 
-void send_message(char* msg, int sokcet_desc){
+void send_message(char* msg, int uid){
 
     int res;
 
     if(DEBUG) printf("The message we are about to send is: %s \n", msg);
     
-    res = write(sokcet_desc, msg,strlen(msg));
-    
-    if(res == -1){
-        handle_error("Ca not send message");
+    if (DEBUG) printf("Logged user: %d \n",logged_users);
+
+    pthread_mutex_lock(&mutex);
+    int i;
+    for(i = 0; i < logged_users; i++){
+        
+        if(user_list[i]->uid != uid){
+            res = send(user_list[i]->sokcet_desc, msg,strlen(msg),0);
+
+            if(res == -1){
+                handle_error("Ca not send message");
+            }
+        }
+        
+        printf("prov :%d\n",logged_users);
+        printf("User: %s\n", user_list[i]->name);
+
     }
+    
+    pthread_mutex_unlock(&mutex);
 
     if(DEBUG) fprintf(stderr, "Message sent successfully by the server\n");
 }
@@ -80,26 +107,29 @@ void *connection_handler(void *arg){
     
     int ret;
     char buf[2048];
-    size_t bud_len = sizeof(buf);
 
     char name[32];
     logged_users++;
 
     user_t *user = (user_t*)arg;
 
+    // recive username
     ret = recv(user->sokcet_desc, name, 32 ,0);
     if(ret == -1){
         handle_error("Can not recive user name");
     }
     if(ret){
+        newline_remove(name);
         if(strlen(name) == 0){
-            fprintf(stderr, "Name field can not be empty");
-            exit(EXIT_FAILURE);
+            fprintf(stderr, "Name field can not be empty\n");
+            //TODO
         }
         else{
             strcpy(user->name, name);
         }
     }
+
+    printf("User: %s has joined the server with uid: %d\n",user->name, user->uid);
 
     if(DEBUG) printf("Name: %s\n", name);
 
@@ -122,7 +152,7 @@ void *connection_handler(void *arg){
         if(DEBUG) printf("We recive %d bytes\n", bytes_read);
         if(DEBUG) printf("The message we recived is: %s \n", buf);
         
-        send_message(buf, user->sokcet_desc);
+        send_message(buf, user->uid);
         
     }
 
@@ -132,6 +162,8 @@ void *connection_handler(void *arg){
         handle_error("Can not close socket");
     }
     remove_queque(user->uid);
+    free(user->client_addr);
+    //free(arg);
     free(user);
     logged_users--;
 
@@ -148,9 +180,9 @@ int main(int argc, char* argv[]){
     printf("---Starting the server---\n");
 
     struct sockaddr_in server_addr = {0};
-    struct sockaddr_in client_addr = {0};
+    //struct sockaddr_in client_addr = {0};
 
-    int sockaddr_len = sizeof(struct sockaddr_in);
+    int sockaddr_len = sizeof(struct sockaddr_in);  
 
     //create socket
     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
@@ -169,7 +201,7 @@ int main(int argc, char* argv[]){
     }
 
     //bind address
-    ret = bind(socket_desc, (struct sockaddr*) &server_addr, sizeof(struct sockaddr_in));
+    ret = bind(socket_desc, (struct sockaddr*) &server_addr, sockaddr_len);
     if(ret){
         handle_error("Can not bind");
     }
@@ -187,20 +219,22 @@ int main(int argc, char* argv[]){
         struct sockaddr_in* client_addr =  calloc(1, sizeof(struct sockaddr_in));
 
         //accept connection
+
         client_desc = accept(socket_desc, (struct sockaddr*) &client_addr,(socklen_t*) &sockaddr_len);
+    
         if(client_desc == -1){
             handle_error("Can not open socket to accept connection");
         }
 
-        uid++;
+        //TODO add check for max client logged
 
         //thrad arg
         user_t *user_args = malloc(sizeof(user_t));
-        user_args->uid = uid;
+        user_args->uid = uid++;
         user_args->sokcet_desc = client_desc;
         user_args->client_addr = client_addr;
         add_queque(user_args);
-        ret = pthread_create(&thread, NULL, connection_handler, (void*)user_args);
+        ret = pthread_create(&thread, NULL, &connection_handler, (void*)user_args);
         if(ret){
             handle_error("Can not create a new thread");
         }

@@ -8,16 +8,45 @@
 #include <sys/socket.h>
 #include <pthread.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 int socket_desc;
+int quit;
 
 void handle_error(char* msg){
     perror(msg);
     exit(EXIT_FAILURE);
 }
 
+void newline_remove(char *msg_in){
+    int msg_in_len = strlen(msg_in);
+   
+    int i;
+    for(i = 0; i < msg_in_len; i++){
+        if(msg_in[i] == '\n'){
+            msg_in[i] =  '\0';
+            break;
+        }
+    }
+}
 
+void login(char* name){
+    //login  part1
+    printf("Enter your username: \n");
+    if(fgets(name,32,stdin) != (char*) name){
+        
+        fprintf(stderr, "Can not read from stdin\n");
+        exit(EXIT_FAILURE);
+        
+    }
+    newline_remove(name);
+    int name_len = strlen(name);
+    if(name_len == 0){
+        fprintf(stderr, "Name field can not be empty\n");
+        exit(EXIT_FAILURE);
+    }
+   
+}
 
 void send_message_client(){
     
@@ -26,24 +55,24 @@ void send_message_client(){
     int ret;
     char buf[2048];
     size_t buf_len = sizeof(buf);
-    int msg_len;
+         
     memset(buf, 0, buf_len);
+    while(1){
+        if(fgets(buf, sizeof(buf), stdin) != (char*)buf){
+            fprintf(stderr, "Can not read from stdin");
+            exit(EXIT_FAILURE);
+        }
 
-        
-    if(fgets(buf, sizeof(buf), stdin) != (char*)buf){
-        fprintf(stderr, "[ERROR] Can not read from stdin");
-        exit(EXIT_FAILURE);
-    }
+        if(DEBUG) printf("The message we are about to send is: %s \n", buf);
 
-    if(DEBUG) printf("The message we are about to send is: %s \n", buf);
+        ret = send(socket_desc, buf,strlen(buf), 0);
+        if(ret == -1){
+            handle_error("Can not send message");
+        }
 
-    ret = write(socket_desc, buf,strlen(buf));
-    if(ret == -1){
-        handle_error("Can not send message");
-    }
-
-    if(DEBUG){
-        fprintf(stderr, "Message sent correctly\n");
+        if(DEBUG){
+            fprintf(stderr, "Message sent correctly\n");
+        }
     }
 
 }
@@ -53,10 +82,16 @@ void recv_message_client(){
     if(DEBUG) fprintf(stderr, "We are in recv_message\n");
     int ret;
     int recv_bytes;
-    size_t buf_len = sizeof(buf_out);
-    do{
-       ret = recv(socket_desc, buf_out + recv_bytes, buf_len - recv_bytes ,0); 
-       if(ret == -1 && errno == EINTR){
+    //size_t buf_len = sizeof(buf_out);
+    
+    while(1){
+        ret = recv(socket_desc, buf_out, 2048,0); 
+        
+        if(ret > 0){
+            printf("RES: %s", buf_out);
+        }
+
+        if(ret == -1 && errno == EINTR){
             continue;
             }
         if(ret == -1){
@@ -65,29 +100,22 @@ void recv_message_client(){
         if(ret == 0){
            break; 
         }
-        
+
         recv_bytes += ret;
         if(DEBUG) printf("We recive %d bytes\n", recv_bytes);
-    }while(buf_out[recv_bytes-1] != '\n');
-    
-    printf("RES: %s\n", buf_out);
-
+        //memset(buf_out, 0, buf_len);
+    }
 }
 
 int main(int argc, char* argv[]){
     int ret;
-    char buf[2048];
     //provvisional address
     int port = 5000;
     char *ad = "127.0.0.1";
     char name[32];
+    quit = 0;
 
-    //login  part1
-    printf("Enter your username: \n");
-    if(!fgets(name,32,stdin)){
-        fprintf(stderr, "User name field can not be empty");
-        exit(EXIT_FAILURE);
-    }
+    login(name);
 
     //TODO password
 
@@ -120,17 +148,28 @@ int main(int argc, char* argv[]){
     }
 
     //TO DO  send & recive
-    
-    while(1){
-        if(DEBUG) fprintf(stderr, "Start send message\n");
-       
-        send_message_client();
-        
-        if(DEBUG) fprintf(stderr, "Start recive message\n");
-        recv_message_client();
+    pthread_t send_thread;
+    pthread_t recv_thread;
 
-        
-    }
+    ret = pthread_create(&send_thread, NULL, (void*)send_message_client, NULL);
+    ret = pthread_create(&recv_thread, NULL, (void*)recv_message_client, NULL);
+
+    if(DEBUG) printf("Thread creato\n");
+
+    while (1){
+		if(quit){
+			break;
+        }
+        sleep(10);
+        if(DEBUG) printf("Loop\n");
+	}
     
+    ret = close(socket_desc);
+    if(ret == -1){
+        handle_error("Can not close socket");
+    }
+
+    if(DEBUG) printf("EXIT\n");
+
     exit(EXIT_SUCCESS);
 }
