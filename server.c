@@ -277,9 +277,12 @@ void *connection_handler(void *arg){
     
     if(DEBUG) fprintf(stderr, "We are in connection handler\n");
     
+    //TODO correct size
+
     int ret, running;
     char buf[2048];
-    
+    char buf_out[2048+32];
+
     user_t *user = (user_t*)arg;
 
     // recive username
@@ -318,7 +321,10 @@ void *connection_handler(void *arg){
             break;
         }
         
-        send_message(buf, user->uid);
+        //formatting the message with name
+        sprintf(buf_out, "%s: %s",user->name,buf);
+
+        send_message(buf_out, user->uid);
         
     }
 

@@ -36,7 +36,7 @@ void newline_remove(char *msg_in){
 //TODO QUIT COMMAND
 //Welcome message + mod of use
 //check if the user is already registered 
-//catch ctrl c
+//send name wityh msg
 
 void handle_ctrlc(){
     int ret;
@@ -181,7 +181,7 @@ void recv_message_client(){
         ret = recv(socket_desc, buf_out, 2048,0); 
 
         if(ret > 0){
-            printf("RES: %s", buf_out);
+            printf(":> %s", buf_out);
         }
 
         if(ret == -1 && errno == EINTR){
