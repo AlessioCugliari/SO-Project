@@ -281,7 +281,7 @@ void *connection_handler(void *arg){
 
     int ret, running;
     char buf[2048];
-    char buf_out[2048+32];
+    char buf_out[2080];
 
     user_t *user = (user_t*)arg;
 
