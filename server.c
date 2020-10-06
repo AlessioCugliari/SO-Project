@@ -339,6 +339,8 @@ void *connection_handler(void *arg){
     logged_users--;
    
     pthread_detach(pthread_self());
+
+    printf("User has left the server\n");
 }
 
 int main(int argc, char* argv[]){

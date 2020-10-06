@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <pthread.h>
+#include <signal.h>
 
 #define DEBUG 0
 #define QUIT_COMMAND "/QUIT\n"
@@ -35,6 +36,17 @@ void newline_remove(char *msg_in){
 //TODO QUIT COMMAND
 //Welcome message + mod of use
 //check if the user is already registered 
+//catch ctrl c
+
+void handle_ctrlc(){
+    int ret;
+    ret = send(socket_desc, QUIT_COMMAND, quit_command_len,0);
+    if(ret == -1){
+        handle_error("Can not send quit message to server");
+    }
+    quit = 1;
+}
+
 int new_user(){
 
     int current_attemps;
@@ -211,6 +223,9 @@ int main(int argc, char* argv[]){
     if(DEBUG) printf("New User: %d \n",new_user_opt);
     int login_val = login(name,password);
     if(DEBUG) printf("Login value: %d \n",login_val);
+
+    //
+    signal(SIGINT,handle_ctrlc);
 
     //variables for handling a socket
     
