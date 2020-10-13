@@ -83,6 +83,8 @@ int new_user(){
     exit(EXIT_FAILURE);
 }
 
+
+//TODO CHEKC spacial char
 //check login credentials
 int login(char* name, char* password){
    

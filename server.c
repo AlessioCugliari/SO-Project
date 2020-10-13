@@ -15,6 +15,8 @@
 #define MAX_USER 20
 #define BUFFER_SIZE 2048
 #define QUIT_COMMAND "/QUIT\n"
+#define HELP_COMMAND "/HELP\n"
+#define LIST_COMMAND "/USERS\n"
 
 int logged_users = 0, success_conv = 0;
 int uid = 0;
@@ -128,10 +130,14 @@ void send_message_single(char* msg, int sok_dest){
 //user list for debug
 void print_user_list(){
     int i;
-    printf("Current logged users with id:\n");
-    for(i = 0; i < logged_users; i++){
-        printf("UserName: %s ID: %d\n",user_list[i]->name, user_list[i]->uid);
+    if(DEBUG){
+        printf("Current logged users with id:\n");
+        for(i = 0; i < logged_users; i++){
+            printf("UserName: %s ID: %d\n",user_list[i]->name, user_list[i]->uid);
+        }
     }
+    
+    
 }
 
 int login_handler(user_t *user){
@@ -327,7 +333,7 @@ void *connection_handler(void *arg){
         memset(buf_out, 0, buf_len);
 
         if(memcmp(buf,"@",1) == 0){
-            printf("@ OK\n");
+            if(DEBUG) printf("@ OK\n");
             char buf2[BUFFER_SIZE];
             char recv_name[32];
             //remove @
@@ -362,6 +368,27 @@ void *connection_handler(void *arg){
                 if(i == logged_users-1){
 
                     send_message_single("[Server] Sorry but the desired user is not online\n",user->sokcet_desc);
+                }
+                
+            }
+            
+        }
+        else if(memcmp(buf,"/",1) == 0){
+            int command_len;
+            command_len = strlen(HELP_COMMAND);
+            if(memcmp(buf,HELP_COMMAND,command_len) == 0){
+                send_message_single("Welcome to the Help Menu. This is the list of available commands:\n\n/QUIT   Close the client and the connection.\n/USERS  Print the list of all online users.\n@user_name  Send a private message to an online user.\n", user->sokcet_desc);
+            }
+            command_len = strlen(LIST_COMMAND);
+            if(memcmp(buf,LIST_COMMAND,command_len) == 0){
+                if(DEBUG) print_user_list();
+
+                send_message_single("Current logged users with id:\n",user->sokcet_desc);
+                int i;
+                for(i = 0; i < logged_users; i++){
+
+                    sprintf(buf_out,"UserName: %s ID: %d\n",user_list[i]->name, user_list[i]->uid);
+                    send_message_single(buf_out,user->sokcet_desc);
                 }
                 
             }
