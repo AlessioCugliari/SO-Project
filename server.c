@@ -13,6 +13,7 @@
 
 #define DEBUG 1
 #define MAX_USER 20
+#define BUFFER_SIZE 2048
 #define QUIT_COMMAND "/QUIT\n"
 
 int logged_users = 0, success_conv = 0;
@@ -144,7 +145,6 @@ int login_handler(user_t *user){
 
     if(logged_users == MAX_USER){
         printf("Server cannot accept new connections. Maximum number of users reached\n");
-        //gestione errori
         send_message_single("Server cannot accept new connections. Maximum number of users reached, please try again later.\n", user->sokcet_desc);
         return 0;
     }
@@ -276,12 +276,10 @@ int login_handler(user_t *user){
 void *connection_handler(void *arg){
     
     if(DEBUG) fprintf(stderr, "We are in connection handler\n");
-    
-    //TODO correct size
 
     int ret, running;
-    char buf[2048];
-    char buf_out[2080];
+    char buf[BUFFER_SIZE];
+    char buf_out[BUFFER_SIZE+32];
 
     user_t *user = (user_t*)arg;
 
@@ -297,6 +295,8 @@ void *connection_handler(void *arg){
     while(running){
         //read message from client
         int bytes_read = 0;
+        size_t buf_len = sizeof(buf_out);
+        memset(buf, 0, buf_len);
         if(DEBUG) printf("Bau Ruunig\n");
         do{
             ret = recv(user->sokcet_desc, buf + bytes_read, 1, 0);
@@ -321,10 +321,59 @@ void *connection_handler(void *arg){
             break;
         }
         
-        //formatting the message with name
-        sprintf(buf_out, "%s: %s",user->name,buf);
+        //TODO spec option
 
-        send_message(buf_out, user->uid);
+        buf_len = sizeof(buf_out);
+        memset(buf_out, 0, buf_len);
+
+        if(memcmp(buf,"@",1) == 0){
+            printf("@ OK\n");
+            char buf2[BUFFER_SIZE];
+            char recv_name[32];
+            //remove @
+            memcpy(buf,buf+1,sizeof(buf));
+            
+            strcpy(buf2,buf);
+            printf("buf2: %s",buf2);
+            //take name
+            char *recv_tok = strtok(buf," ");
+            
+            strcpy(recv_name,recv_tok);
+            if(DEBUG) printf("recv NAMA %s \n",recv_name);
+            int name_len = strlen(recv_tok);
+            printf("Name len: %d\n",name_len);
+            
+            //remove sapce
+            memcpy(buf2,buf2+1,sizeof(buf2));
+            memcpy(buf2,buf2+name_len,sizeof(buf2));
+            
+            printf("buf2 after cpoy %s",buf2);
+            strcpy(buf,buf2);
+            
+            if(DEBUG) printf("recv NAME %s \n",recv_name);
+            int i;
+            for(i = 0;i<logged_users;i++){
+                if(memcmp(user_list[i]->name, recv_name, name_len) == 0){
+                    if(DEBUG) printf("Trovato!\n");
+                    sprintf(buf_out, "[@%s]: %s",user->name, buf);
+                    send_message_single(buf_out,user_list[i]->sokcet_desc);
+                    break;
+                }
+                if(i == logged_users-1){
+
+                    send_message_single("[Server] Sorry but the desired user is not online\n",user->sokcet_desc);
+                }
+                
+            }
+            
+        }
+        else{
+            
+            //formatting the message with name
+            sprintf(buf_out, "%s: %s",user->name, buf);
+
+            send_message(buf_out, user->uid);
+        }
         
     }
 
@@ -338,15 +387,17 @@ void *connection_handler(void *arg){
     }
    
     remove_queque(user->uid);
-    //free(user->client_addr);
-   
-    //free(arg);
+    
+    free(user->client_addr);
     free(user);
+    
     logged_users--;
    
     pthread_detach(pthread_self());
 
     printf("User has left the server\n");
+    //TODO nitification
+    pthread_exit(NULL);
 }
 
 int main(int argc, char* argv[]){
@@ -401,7 +452,7 @@ int main(int argc, char* argv[]){
 
         //accept connection
 
-        client_desc = accept(socket_desc, (struct sockaddr*) &client_addr,(socklen_t*) &sockaddr_len);
+        client_desc = accept(socket_desc, (struct sockaddr*) client_addr,(socklen_t*) &sockaddr_len);
     
         if(client_desc == -1){
             handle_error("Can not open socket to accept connection");
@@ -421,6 +472,7 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Thread creato con successo\n");
 
     }
+    //free(client_addr);
     return EXIT_SUCCESS;
 
 }

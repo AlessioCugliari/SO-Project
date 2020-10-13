@@ -36,7 +36,7 @@ void newline_remove(char *msg_in){
 //TODO QUIT COMMAND
 //Welcome message + mod of use
 //check if the user is already registered 
-//send name wityh msg
+//TODO fix mesaaage short
 
 void handle_ctrlc(){
     int ret;
@@ -174,7 +174,7 @@ void recv_message_client(){
     if(DEBUG) fprintf(stderr, "We are in recv_message\n");
     int ret;
     int recv_bytes;
-    //size_t buf_len = sizeof(buf_out);
+    size_t buf_len = sizeof(buf_out);
     //TODO messaggi per interrompere connessone
     
     while(1){
@@ -202,7 +202,7 @@ void recv_message_client(){
 
         recv_bytes += ret;
         if(DEBUG) printf("We recive %d bytes\n", recv_bytes);
-        //memset(buf_out, 0, buf_len);
+        memset(buf_out, 0, buf_len);
     }
 }
 
