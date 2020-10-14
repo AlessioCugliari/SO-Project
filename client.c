@@ -33,9 +33,6 @@ void newline_remove(char *msg_in){
     }
 }
 
-//TODO QUIT COMMAND
-//Welcome message + mod of use
-//check if the user is already registered 
 //TODO fix mesaaage short
 
 void handle_ctrlc(){
@@ -218,6 +215,10 @@ int main(int argc, char* argv[]){
     
     quit = 0;
     quit_command_len = strlen(QUIT_COMMAND);
+
+    //Welcome message
+
+    printf("\n**Hello and welcome to this chat room.\n  By default you will in the global chat.\n  If you want to change mode and receive only private message type /MOD in chat.\n  To send a private message type @ followed by the name of the desired user es. @gianni ciao\n  To close the client type /QUIT\n  If you want to see again the option type /HELP\n  Now please tell me if you are new user or not so we can do the login.\n\n**Good Stay! ^^\n\n");
 
     //TODO login in enad exit if failed
     //TODO attemps for login name and password check

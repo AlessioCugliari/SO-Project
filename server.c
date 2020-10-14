@@ -17,6 +17,7 @@
 #define QUIT_COMMAND "/QUIT\n"
 #define HELP_COMMAND "/HELP\n"
 #define LIST_COMMAND "/USERS\n"
+#define CHAT_MOD_COMMAND "/MOD\n"
 
 int logged_users = 0, success_conv = 0;
 int uid = 0;
@@ -28,6 +29,7 @@ int new_user_recv, quit_command_len;
 typedef struct{
     char name[32];
     int uid;
+    int global_chat;
     int sokcet_desc;
     struct sockaddr_in* client_addr;
 }user_t;
@@ -92,7 +94,7 @@ void send_message(char* msg, int uid){
     int i;
     for(i = 0; i < logged_users; i++){
         
-        if(user_list[i]->uid != uid){
+        if(user_list[i]->uid != uid && user_list[i]->global_chat == 1){
             res = send(user_list[i]->sokcet_desc, msg,strlen(msg),0);
 
             if(res == -1 && errno == EINTR){
@@ -130,14 +132,11 @@ void send_message_single(char* msg, int sok_dest){
 //user list for debug
 void print_user_list(){
     int i;
-    if(DEBUG){
-        printf("Current logged users with id:\n");
-        for(i = 0; i < logged_users; i++){
-            printf("UserName: %s ID: %d\n",user_list[i]->name, user_list[i]->uid);
-        }
+    
+    printf("Current logged users with id:\n");
+    for(i = 0; i < logged_users; i++){
+        printf("UserName: %s ID: %d\n",user_list[i]->name, user_list[i]->uid);
     }
-    
-    
 }
 
 int login_handler(user_t *user){
@@ -326,12 +325,10 @@ void *connection_handler(void *arg){
             running = 0;
             break;
         }
-        
-        //TODO spec option
 
         buf_len = sizeof(buf_out);
         memset(buf_out, 0, buf_len);
-
+        //handle the server option and the response
         if(memcmp(buf,"@",1) == 0){
             if(DEBUG) printf("@ OK\n");
             char buf2[BUFFER_SIZE];
@@ -376,10 +373,13 @@ void *connection_handler(void *arg){
         else if(memcmp(buf,"/",1) == 0){
             int command_len;
             command_len = strlen(HELP_COMMAND);
+            //HELP
             if(memcmp(buf,HELP_COMMAND,command_len) == 0){
-                send_message_single("Welcome to the Help Menu. This is the list of available commands:\n\n/QUIT   Close the client and the connection.\n/USERS  Print the list of all online users.\n@user_name  Send a private message to an online user.\n", user->sokcet_desc);
+                
+                send_message_single("Welcome to the Help Menu. This is the list of available commands:\n\n/QUIT   Close the client and the connection.\n/USERS  Print the list of all online users.\n/MOD Switch from public chat mode to private only and vice versa.\n@user_name  Send a private message to an online user.\n", user->sokcet_desc);
             }
             command_len = strlen(LIST_COMMAND);
+            ///USER_LIST
             if(memcmp(buf,LIST_COMMAND,command_len) == 0){
                 if(DEBUG) print_user_list();
 
@@ -391,6 +391,14 @@ void *connection_handler(void *arg){
                     send_message_single(buf_out,user->sokcet_desc);
                 }
                 
+            }
+            command_len = strlen(CHAT_MOD_COMMAND);
+            //MOD
+            if(memcmp(buf,CHAT_MOD_COMMAND,command_len) == 0){
+               if(DEBUG) printf("mod start %d \n",user->global_chat);
+               user->global_chat = 1 - user->global_chat;
+               if(DEBUG) printf("mod start %d \n",user->global_chat);
+               send_message_single("Mode changed successfully!\n",user->sokcet_desc); 
             }
             
         }
@@ -488,6 +496,7 @@ int main(int argc, char* argv[]){
         //thrad arg
         user_t *user_args = malloc(sizeof(user_t));
         user_args->uid = uid++;
+        user_args->global_chat = 1;
         user_args->sokcet_desc = client_desc;
         user_args->client_addr = client_addr;
         add_queque(user_args);
