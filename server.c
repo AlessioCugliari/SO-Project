@@ -72,7 +72,7 @@ void remove_queque(int uid){
     pthread_mutex_lock(&mutex);
     int i;
     for(i = 0; i<MAX_USER; i++){
-        if(user_list[i]->uid == uid){
+        if(user_list[i] != NULL && user_list[i]->uid == uid){
             user_list[i] = NULL;
             break;
         }
