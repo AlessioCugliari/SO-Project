@@ -45,13 +45,14 @@ void handle_ctrlc(){
 }
 
 int new_user(){
-
+    //TODO val
     int current_attemps;
     char val[4];
 
     for(current_attemps = 1; current_attemps <= max_attemps; ++current_attemps){
         
-        printf("Are you a new user?(y/n)\n");
+        memset(val,0,sizeof(val));
+        printf(":> Are you a new user?(y/n)\n");
         if(fgets(val,4,stdin) != (char*) val){
         
             fprintf(stderr, "Can not read from stdin\n");
@@ -68,11 +69,11 @@ int new_user(){
             return 0;
         }
 
-        printf("Please enter valid input\n");
-        printf("Attemp(s): %d/3\n", current_attemps);
+        printf(":>Please enter valid input\n");
+        printf(":>Attemp(s): %d/3\n", current_attemps);
         
         if(current_attemps == max_attemps){
-            printf("Maximum number of login attempts reached.Exiting...\n ");
+            printf(":>Maximum number of login attempts reached.Exiting...\n ");
             exit(EXIT_FAILURE);
             
         }
@@ -89,13 +90,13 @@ int login(char* name, char* password){
 
     for(current_attemps = 1; current_attemps <= max_attemps; ++current_attemps){
         
-        printf("Enter your username: \n");
+        printf(":>Enter your username: \n");
         if(fgets(name,32,stdin) != (char*) name){
         
             fprintf(stderr, "Can not read from stdin\n");
             exit(EXIT_FAILURE);
         }
-        printf("Enter your password (min 2 characters): \n");       //2 provv
+        printf(":>Enter your password (min 2 characters): \n");       //2 provv
         if(fgets(password,32,stdin) != (char*) password){
         
             fprintf(stderr, "Can not read from stdin\n");
@@ -115,16 +116,16 @@ int login(char* name, char* password){
         
         if(name_len == 0){
             fprintf(stderr, "Name field can not be empty\n");
-            printf("Attemp(s): %d/3\n", current_attemps);
+            printf(":>Attemp(s): %d/3\n", current_attemps);
         }
         
         if(pass_len < 2){
            fprintf(stderr, "The password is too short\n"); 
-           printf("Attemp(s): %d/3\n", current_attemps);
+           printf(":>Attemp(s): %d/3\n", current_attemps);
         }
 
         if(current_attemps == max_attemps){
-            printf("Maximum number of login attempts reached.Exiting...\n ");
+            printf(":>Maximum number of login attempts reached.Exiting...\n ");
             return 0;
         }
         
@@ -208,8 +209,9 @@ void recv_message_client(){
 int main(int argc, char* argv[]){
     int ret;
     //provvisional address
-    int port = 5000;
-    char *ad = "127.0.0.1";
+    int port = 4500;
+    //char *ad = "127.0.0.1";
+    char *ad = "192.168.1.6";
     char name[32];
     char password[32];
     
@@ -282,7 +284,7 @@ int main(int argc, char* argv[]){
         }
         
         //TO DO  send & recive
-        printf("Spawnig Thread\n");
+        if(DEBUG) printf("Spawnig Thread\n");
 
         pthread_t send_thread;
         pthread_t recv_thread;

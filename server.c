@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define MAX_USER 20
 #define BUFFER_SIZE 2048
 #define QUIT_COMMAND "/QUIT\n"
@@ -26,6 +26,7 @@ int new_user_recv, quit_command_len;
 
 //TODO opwn port
 //TODO Inserire struc user
+//TODO info in server if debug 0
 typedef struct{
     char name[32];
     int uid;
@@ -317,6 +318,7 @@ void *connection_handler(void *arg){
             
         }while(buf[bytes_read++] != '\n');
         
+        printf("A new message has been received\n");
         if(DEBUG) printf("We recive %d bytes\n", bytes_read);
         if(DEBUG) printf("The message we recived is: %s \n", buf);
 
@@ -331,8 +333,10 @@ void *connection_handler(void *arg){
         //handle the server option and the response
         if(memcmp(buf,"@",1) == 0){
             if(DEBUG) printf("@ OK\n");
+            
             char buf2[BUFFER_SIZE];
             char recv_name[32];
+           
             //remove @
             memcpy(buf,buf+1,sizeof(buf));
             
@@ -354,16 +358,18 @@ void *connection_handler(void *arg){
             strcpy(buf,buf2);
             
             if(DEBUG) printf("recv NAME %s \n",recv_name);
+            
             int i;
             for(i = 0;i<logged_users;i++){
                 if(memcmp(user_list[i]->name, recv_name, name_len) == 0){
+                    
                     if(DEBUG) printf("Trovato!\n");
+                    
                     sprintf(buf_out, "[@%s]: %s",user->name, buf);
                     send_message_single(buf_out,user_list[i]->sokcet_desc);
                     break;
                 }
                 if(i == logged_users-1){
-
                     send_message_single("[Server] Sorry but the desired user is not online\n",user->sokcet_desc);
                 }
                 
@@ -371,8 +377,10 @@ void *connection_handler(void *arg){
             
         }
         else if(memcmp(buf,"/",1) == 0){
+            
             int command_len;
             command_len = strlen(HELP_COMMAND);
+            
             //HELP
             if(memcmp(buf,HELP_COMMAND,command_len) == 0){
                 
@@ -381,32 +389,35 @@ void *connection_handler(void *arg){
             command_len = strlen(LIST_COMMAND);
             ///USER_LIST
             if(memcmp(buf,LIST_COMMAND,command_len) == 0){
+                
                 if(DEBUG) print_user_list();
 
-                send_message_single("Current logged users with id:\n",user->sokcet_desc);
+                char online_list[BUFFER_SIZE] = "Current logged users with id:\n";
                 int i;
                 for(i = 0; i < logged_users; i++){
 
                     sprintf(buf_out,"UserName: %s ID: %d\n",user_list[i]->name, user_list[i]->uid);
-                    send_message_single(buf_out,user->sokcet_desc);
+                    strcat(online_list,buf_out);
                 }
                 
+                send_message_single(online_list,user->sokcet_desc);
             }
             command_len = strlen(CHAT_MOD_COMMAND);
             //MOD
             if(memcmp(buf,CHAT_MOD_COMMAND,command_len) == 0){
+               
                if(DEBUG) printf("mod start %d \n",user->global_chat);
+               
                user->global_chat = 1 - user->global_chat;
+               
                if(DEBUG) printf("mod start %d \n",user->global_chat);
                send_message_single("Mode changed successfully!\n",user->sokcet_desc); 
             }
             
         }
         else{
-            
             //formatting the message with name
             sprintf(buf_out, "%s: %s",user->name, buf);
-
             send_message(buf_out, user->uid);
         }
         
@@ -438,8 +449,8 @@ void *connection_handler(void *arg){
 int main(int argc, char* argv[]){
     int ret;
     int socket_desc, client_desc;
-    int port = 5000;
-
+    int port = 4500;
+    
     quit_command_len = strlen(QUIT_COMMAND);
     
     pthread_t thread; 
@@ -474,7 +485,7 @@ int main(int argc, char* argv[]){
     }
 
     //listen on socket
-    ret = listen(socket_desc, 10);      //need change 
+    ret = listen(socket_desc, 20);      
     if(ret){
         handle_error("Can not listen");
     }
