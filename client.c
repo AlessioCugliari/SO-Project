@@ -33,8 +33,6 @@ void newline_remove(char *msg_in){
     }
 }
 
-//TODO fix mesaaage short
-
 void handle_ctrlc(){
     int ret;
     ret = send(socket_desc, QUIT_COMMAND, quit_command_len,0);
@@ -44,6 +42,7 @@ void handle_ctrlc(){
     quit = 1;
 }
 
+//Check new user
 int new_user(){
     //TODO val
     int current_attemps;
@@ -81,9 +80,6 @@ int new_user(){
     exit(EXIT_FAILURE);
 }
 
-
-//TODO CHEKC spacial char
-//check login credentials
 int login(char* name, char* password){
    
     int current_attemps;
@@ -159,6 +155,7 @@ void send_message_client(){
         if(memcmp(buf,QUIT_COMMAND,quit_command_len) == 0){
             if (DEBUG) printf("can we quit?\n");
             quit = 1;
+            pthread_exit(NULL);
             break;
         }
 
@@ -175,7 +172,6 @@ void recv_message_client(){
     int ret;
     int recv_bytes;
     size_t buf_len = sizeof(buf_out);
-    //TODO messaggi per interrompere connessone
     
     while(1){
         ret = recv(socket_desc, buf_out, 2048,0); 
@@ -197,6 +193,7 @@ void recv_message_client(){
         if(memcmp(buf_out,QUIT_COMMAND,quit_command_len) == 0){
             printf("Exiting...\n");
             quit = 1;
+            pthread_exit(NULL);
             break;
         }
 
@@ -208,7 +205,7 @@ void recv_message_client(){
 
 int main(int argc, char* argv[]){
     int ret;
-    //provvisional address
+    
     int port = 4500;
     //char *ad = "127.0.0.1";
     char *ad = "192.168.1.6";
@@ -222,8 +219,6 @@ int main(int argc, char* argv[]){
 
     printf("\n**Hello and welcome to this chat room.\n  By default you will in the global chat.\n  If you want to change mode and receive only private message type /MOD in chat.\n  To send a private message type @ followed by the name of the desired user es. @gianni ciao\n  To see all the online user(s) type /USERS\n  To close the client type /QUIT\n  If you want to see again the option type /HELP\n  Now please tell me if you are new user or not so we can do the login.\n\n**Good Stay! ^^\n\n");
 
-    //TODO login in enad exit if failed
-    //TODO attemps for login name and password check
     int new_user_opt = new_user();
     if(DEBUG) printf("New User: %d \n",new_user_opt);
     int login_val = login(name,password);
@@ -254,7 +249,7 @@ int main(int argc, char* argv[]){
             handle_error("Can not create a connection");
         } 
 
-        fprintf(stderr, "Connesione Creata\n");
+        printf("---Welcome to the Server---\n");
 
         //send if the user is a new one
         int opt_conv = htonl(new_user_opt);
@@ -296,6 +291,8 @@ int main(int argc, char* argv[]){
 
         while (1){
 		    if(quit){
+                pthread_detach(recv_thread);
+                pthread_detach(send_thread);
 			    break;
             }
             sleep(10);
@@ -305,8 +302,6 @@ int main(int argc, char* argv[]){
         if(ret == -1){
             handle_error("Can not close socket");
         }
-
-    //close 3d
 
     }
 

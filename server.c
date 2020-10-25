@@ -24,8 +24,6 @@ int uid = 0;
 int login_fd;
 int new_user_recv, quit_command_len;
 
-//TODO opwn port
-//TODO Inserire struc user
 //TODO info in server if debug 0
 typedef struct{
     char name[32];
@@ -113,7 +111,7 @@ void send_message(char* msg, int uid){
     if(DEBUG) fprintf(stderr, "Message sent successfully by the server\n");
 }
 
-//TODO send message to only 1 client
+//send message to only 1 client
 void send_message_single(char* msg, int sok_dest){
     
     int res;
@@ -226,7 +224,7 @@ int login_handler(user_t *user){
             }
             credentials = strtok(NULL,"\n");
         }
-        //Controllare condizione non registra piu
+        //registration
         if(success != 0){
             strcat(name,password);
             if(DEBUG) printf("Concat: %s\n",name);
@@ -441,8 +439,9 @@ void *connection_handler(void *arg){
    
     pthread_detach(pthread_self());
 
-    printf("User has left the server\n");
-    //TODO nitification
+    // notification
+    printf("A user has left the server\n");
+
     pthread_exit(NULL);
 }
 
@@ -519,7 +518,7 @@ int main(int argc, char* argv[]){
         fprintf(stderr, "Thread creato con successo\n");
 
     }
-    //free(client_addr);
+    
     return EXIT_SUCCESS;
 
 }
