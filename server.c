@@ -352,7 +352,7 @@ void *connection_handler(void *arg){
             memcpy(buf2,buf2+1,sizeof(buf2));
             memcpy(buf2,buf2+name_len,sizeof(buf2));
             
-            printf("buf2 after cpoy %s",buf2);
+            if(DEBUG) printf("buf2 after cpoy %s",buf2);
             strcpy(buf,buf2);
             
             if(DEBUG) printf("recv NAME %s \n",recv_name);
@@ -415,8 +415,10 @@ void *connection_handler(void *arg){
         }
         else{
             //formatting the message with name
-            sprintf(buf_out, "%s: %s",user->name, buf);
-            send_message(buf_out, user->uid);
+            if(user->global_chat == 1){
+                sprintf(buf_out, "%s: %s",user->name, buf);
+                send_message(buf_out, user->uid);
+            }
         }
         
     }
