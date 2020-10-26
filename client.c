@@ -12,6 +12,8 @@
 #define DEBUG 0
 #define QUIT_COMMAND "/QUIT\n"
 
+//TODO ins eddrees
+
 int socket_desc;
 int quit, quit_command_len;
 int max_attemps = 3;
@@ -204,11 +206,17 @@ void recv_message_client(){
 }
 
 int main(int argc, char* argv[]){
-    int ret;
     
-    int port = 4500;
+    if(argc != 2){
+        printf("Usage: %s ip\n",argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    int ret;
+    int port = 4999;
     //char *ad = "127.0.0.1";
-    char *ad = "192.168.1.6";
+    //char *ad = "192.168.1.6";
+    char *ad = argv[1];
+    if(DEBUG) printf("Add: %s\n", ad);
     char name[32];
     char password[32];
     

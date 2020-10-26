@@ -29,7 +29,7 @@ When a user leaves all resource will be freed. There are two function to send me
 •  How to run.
 
 Use the make command to compile the server and client.
-If you want to run it locally launch first the server by typing ./server and then the client ./client.
+If you want to run it locally launch first the server by typing ./server and then the client ./client server_ip.
 Be sure that the ip and port are correct. If you want to connect to an already active server launch only the client
 
 
