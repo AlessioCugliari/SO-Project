@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 
-#define DEBUG 0
+#define DEBUG 1
 #define MAX_USER 20
 #define BUFFER_SIZE 2048
 #define QUIT_COMMAND "/QUIT\n"
@@ -283,7 +283,7 @@ void *connection_handler(void *arg){
 
     int ret, running;
     char buf[BUFFER_SIZE];
-    char buf_out[BUFFER_SIZE+32];
+    char buf_out[BUFFER_SIZE+38];
 
     user_t *user = (user_t*)arg;
 
@@ -301,7 +301,7 @@ void *connection_handler(void *arg){
         int bytes_read = 0;
         size_t buf_len = sizeof(buf_out);
         memset(buf, 0, buf_len);
-        if(DEBUG) printf("Bau Ruunig\n");
+        if(DEBUG) printf("Ready!!!\n");
         do{
             ret = recv(user->sokcet_desc, buf + bytes_read, 1, 0);
             if(ret == -1 && errno == EINTR){
@@ -336,26 +336,32 @@ void *connection_handler(void *arg){
             char recv_name[32];
            
             //remove @
-            memcpy(buf,buf+1,sizeof(buf));
-            
+            //memcpy(buf,buf+1,sizeof(buf));
+            memmove(buf,buf+1,sizeof(buf));
+            //copy the message + name
             strcpy(buf2,buf);
-            printf("buf2: %s",buf2);
+            if (DEBUG) printf("buf2: %s",buf2);
             //take name
-            char *recv_tok = strtok(buf," ");
             
+            char *recv_tok = strtok(buf," ");
             strcpy(recv_name,recv_tok);
             if(DEBUG) printf("recv NAMA %s \n",recv_name);
-            int name_len = strlen(recv_tok);
-            printf("Name len: %d\n",name_len);
+            
+            size_t name_len = strlen(recv_tok);
+            if(DEBUG) printf("Name len: %zu\n",name_len);
             
             //remove sapce
-            memcpy(buf2,buf2+1,sizeof(buf2));
-            memcpy(buf2,buf2+name_len,sizeof(buf2));
+            //memcpy(buf2,buf2+1,sizeof(buf2));
+            name_len++;
+            size_t buf2_len = strlen(buf2);
+            if(DEBUG) printf("buf2 len: %zu\n",buf2_len);
+            //memcpy(buf2,buf2+name_len,sizeof(buf2));
+            memmove(buf2,buf2+name_len,sizeof(buf2));
             
             if(DEBUG) printf("buf2 after cpoy %s",buf2);
             strcpy(buf,buf2);
             
-            if(DEBUG) printf("recv NAME %s \n",recv_name);
+            if(DEBUG) printf("recv NAME2 %s \n",recv_name);
             
             int i;
             for(i = 0;i<logged_users;i++){
@@ -491,6 +497,7 @@ int main(int argc, char* argv[]){
         handle_error("Can not listen");
     }
 
+    printf("UP\n");
     printf("---SERVER UP---\n");
 
     while(1){
