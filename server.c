@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include <fcntl.h>
 
-#define DEBUG 1
+#define DEBUG 0
 #define MAX_USER 20
 #define BUFFER_SIZE 2048
 #define QUIT_COMMAND "/QUIT\n"
@@ -497,7 +497,6 @@ int main(int argc, char* argv[]){
         handle_error("Can not listen");
     }
 
-    printf("UP\n");
     printf("---SERVER UP---\n");
 
     while(1){
