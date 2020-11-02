@@ -8,7 +8,9 @@ These are the commands available:
 
 /MOD Switch between global mode and private only  
 
-/USERS Show all the only line client /QUIT Close the client 
+/USERS Show all the only line client 
+
+/QUIT Close the client 
 
 @user_name prova Will send a private message to the client named user_name with text prova. 
 

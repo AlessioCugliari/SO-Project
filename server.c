@@ -24,7 +24,6 @@ int uid = 0;
 int login_fd;
 int new_user_recv, quit_command_len;
 
-//TODO info in server if debug 0
 typedef struct{
     char name[32];
     int uid;
@@ -130,8 +129,8 @@ void send_message_single(char* msg, int sok_dest){
 
 //user list for debug
 void print_user_list(){
-    int i;
     
+    int i;
     printf("Current logged users with id:\n");
     for(i = 0; i < logged_users; i++){
         printf("UserName: %s ID: %d\n",user_list[i]->name, user_list[i]->uid);
@@ -139,8 +138,6 @@ void print_user_list(){
 }
 
 int login_handler(user_t *user){
-
-    //TODO send message back to client
 
     int success = 0,name_len = 0;
     int ret;
@@ -336,7 +333,6 @@ void *connection_handler(void *arg){
             char recv_name[32];
            
             //remove @
-            //memcpy(buf,buf+1,sizeof(buf));
             memmove(buf,buf+1,sizeof(buf));
             //copy the message + name
             strcpy(buf2,buf);
@@ -351,11 +347,10 @@ void *connection_handler(void *arg){
             if(DEBUG) printf("Name len: %zu\n",name_len);
             
             //remove sapce
-            //memcpy(buf2,buf2+1,sizeof(buf2));
             name_len++;
             size_t buf2_len = strlen(buf2);
             if(DEBUG) printf("buf2 len: %zu\n",buf2_len);
-            //memcpy(buf2,buf2+name_len,sizeof(buf2));
+            
             memmove(buf2,buf2+name_len,sizeof(buf2));
             
             if(DEBUG) printf("buf2 after cpoy %s",buf2);
@@ -465,7 +460,6 @@ int main(int argc, char* argv[]){
     printf("---Starting the server---\n");
 
     struct sockaddr_in server_addr = {0};
-    //struct sockaddr_in client_addr = {0};
 
     int sockaddr_len = sizeof(struct sockaddr_in);  
 

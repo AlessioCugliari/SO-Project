@@ -12,8 +12,6 @@
 #define DEBUG 0
 #define QUIT_COMMAND "/QUIT\n"
 
-//TODO ins eddrees
-
 int socket_desc;
 int quit, quit_command_len;
 int max_attemps = 3;
@@ -46,22 +44,22 @@ void handle_ctrlc(){
 
 //Check new user
 int new_user(){
-    //TODO val
+    
     int current_attemps;
-    char val[4];
+    char val[32];
 
     for(current_attemps = 1; current_attemps <= max_attemps; ++current_attemps){
         
-        memset(val,0,sizeof(val));
         printf(":> Are you a new user?(y/n)\n");
-        if(fgets(val,4,stdin) != (char*) val){
+        
+        if(fgets(val,32,stdin) != (char*) val){
         
             fprintf(stderr, "Can not read from stdin\n");
             exit(EXIT_FAILURE);
         }
 
         newline_remove(val);
-        
+
         if(strcmp(val,"y") == 0){
             return 1;
         }
@@ -214,7 +212,6 @@ int main(int argc, char* argv[]){
     int ret;
     int port = 4999;
     //char *ad = "127.0.0.1";
-    //char *ad = "192.168.1.6";
     char *ad = argv[1];
     if(DEBUG) printf("Add: %s\n", ad);
     char name[32];
