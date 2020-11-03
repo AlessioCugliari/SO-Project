@@ -1,7 +1,7 @@
 # SO-Project
 •  What 
 
-A simple chat room with server and client. By default, all the user are in a global chat. Is possible to not receive the global message using a special command. Is also possible to send a private message to a logged user. 
+A simple chat room with server and client inspired by the chat of the streaming site twitch. By default, all the user are in a global chat. Is possible to not receive the global message using a special command. Is also possible to send a private message to a logged user. 
 These are the commands available: 
 
 /HELP Show all the special commands available in the chat 
@@ -18,7 +18,7 @@ These are the commands available:
 
 CLIENT
 
-The client will ask if the user is new or not and the user name and password. Then will check if the inputs are theoretically correct like length max or empty field. If this phase is correct will create a connection to the server to check if the credential are correct in the server 
+The client will ask if the user is new or not and the user name and password. Then will check if the inputs are theoretically correct like length max or empty field. If this phase is correct the client will create a connection to the server to check if the credential are correct in the server 
 BD
 . If all is successful two thread will manage the sending and receiving of messages.
 
